@@ -160,7 +160,7 @@ export const processAudioBuffer = (buffer: Buffer): Buffer => {
   return Buffer.from(float32Data.buffer);
 }
 
-export function convertAudioToPCM16(audioFile: Buffer, sourceRate: number = 44100, targetRate: number = 24000): string {
+export function convertAudioToPCM16(audioFile: Buffer, sourceRate: number = 16000, targetRate: number = 24000): string {
   // Convert audio file to PCM16 24kHz mono format from 44.1kHz
   const audioBuffer = audioFile.buffer;
   const view = new DataView(audioBuffer);

@@ -51,7 +51,8 @@ app.get(
             } catch (e) {
               // If parsing fails, send original data
             }
-            // client.send(data);
+            console.log("Sending to ESP32: ", data);
+            client.send(data);
             // client.send(data);
           }
         });

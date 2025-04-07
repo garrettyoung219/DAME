@@ -13,9 +13,11 @@
 #include "lib_websocket.h"
 #include <esp_task_wdt.h>  // Required for watchdog control
 #include "esp_heap_caps.h"
+#include "NextionDisplay.h"
 
 int16_t sBuffer[bufferLen];
 ButtonChecker button;
+NextionDisplay display(Serial2, 17, 16);
 
 // Function declarations
 void setupLEDs();
@@ -89,6 +91,7 @@ void setup() {
     Serial.println("Finished setting up Audio IO");
 
     xTaskCreatePinnedToCore(micTask, "micTask", 16000, NULL, 1, NULL, 1);
+    display.begin();
 }
 
 void loop() {
@@ -119,6 +122,8 @@ void loop() {
         i2s_stop(I2S_PORT_MIC);
         i2s_zero_dma_buffer(I2S_PORT_MIC);
         delay(100);
+
+        display.clear(); // clear display
         
         i2s_start(I2S_PORT_SPEAKER);
         delay(100);
