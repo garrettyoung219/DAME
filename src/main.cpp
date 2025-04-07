@@ -17,11 +17,58 @@
 #include "NimBLEDevice.h"
 #include <XboxSeriesXControllerESP32_asukiaaa.hpp>
 #include "xboxControl.h"
+#include "NextionDisplay.h"
 
 int16_t sBuffer[bufferLen];
 ButtonChecker button;
-NextionDisplay display(Serial2, 17, 16);
 XboxSeriesXControllerESP32_asukiaaa::Core xboxController(XBOX_CONTROLLER_BLE_ADDRESS);
+NextionDisplay display(Serial2, 17, 16);
+
+// Function declarations
+void setupLEDs();
+void setupAudioIO();
+
+void printMemoryStats() {
+    Serial.printf("🔍 Free Heap (Internal RAM): %d bytes | Free PSRAM: %d bytes\n", 
+                  heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                  heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+}
+
+// void printTaskStats() {
+//     TaskStatus_t *taskArray;
+//     UBaseType_t taskCount = 2;//uxTaskGetNumberOfTasks();
+    
+//     taskArray = (TaskStatus_t *)heap_caps_malloc(taskCount * sizeof(TaskStatus_t), MALLOC_CAP_INTERNAL);
+//     if (taskArray == NULL) {
+//         Serial.println("❌ Failed to allocate memory for task stats!");
+//         return;
+//     }
+
+//     uxTaskGetSystemState(taskArray, taskCount, NULL);
+    
+//     Serial.println("\n🔍 Task Stack Usage:");
+//     for (UBaseType_t i = 0; i < taskCount; i++) {
+//         Serial.printf("📌 Task: %-16s | Free Stack: %d bytes\n",
+//                       taskArray[i].pcTaskName, taskArray[i].usStackHighWaterMark);
+//     }
+    
+//     free(taskArray);
+// }
+
+void monitorMemoryTask(void *pvParameters) {
+    while (true) {
+        printMemoryStats();
+       // printTaskStats();
+        vTaskDelay(pdMS_TO_TICKS(100));  // Print every 5 seconds
+    }
+}
+
+void setupLEDs() {
+    pinMode(LED_MIC, OUTPUT);
+    pinMode(LED_SPKR, OUTPUT);
+    digitalWrite(LED_MIC, LOW);
+    digitalWrite(LED_SPKR, LOW);
+}
 
 void setupAudioIO() {
     setRecording(false);
@@ -47,6 +94,7 @@ void setup() {
     setupAudioIO();
 
     xTaskCreatePinnedToCore(micTask, "micTask", 16000, NULL, 1, NULL, 1);
+    display.begin();
 }
 
 void loop() {
@@ -94,6 +142,8 @@ void loop() {
         i2s_stop(I2S_PORT_MIC);
         i2s_zero_dma_buffer(I2S_PORT_MIC);
         delay(100);
+
+        display.clear(); // clear display
 
         display.clear(); // clear display
         
