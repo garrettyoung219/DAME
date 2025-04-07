@@ -337,7 +337,7 @@ void speaker_play(uint8_t *payload, uint32_t len)
 {
   const float volume = 0.7f;
   const float pitch = 0.8f; // 1.0 = normal speed, >1 = faster, <1 = slower
-  Serial.printf("received %lu bytes", len);
+  //Serial.printf("received %lu bytes", len);
   Serial.println();
   size_t bytes_written;
 
@@ -368,7 +368,7 @@ void speaker_play(uint8_t *payload, uint32_t len)
 
   // After playback completes, switch back to mic mode
   // InitI2SSpeakerOrMic(MODE_MIC);
-  Serial.println("Playback complete, switched back to mic mode");
+  //Serial.println("Playback complete, switched back to mic mode");
 }
 
 void updateToneState()

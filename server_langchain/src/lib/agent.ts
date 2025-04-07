@@ -13,7 +13,7 @@ import { VoiceToolExecutor } from "./executor";
 const EVENTS_TO_IGNORE = [
     "response.function_call_arguments.delta",
     "rate_limits.updated",
-    "response.audio_transcript.delta",
+   // "response.audio_transcript.delta",
     "response.created",
     "response.content_part.added",
     "response.content_part.done",
@@ -24,6 +24,8 @@ const EVENTS_TO_IGNORE = [
     "response.done",
     "response.output_item.done",
 ];
+
+
 
 // Interfaces
 export interface AudioConfig {
@@ -61,6 +63,12 @@ export class OpenAIVoiceReactAgent {
     // Private properties
     private audioManager: AudioManager;
     private recording: boolean = false;
+    private lastAudioTime: number = Date.now();
+    private TEXT_SEND_DELAY: number = 50; // ms between individual text sends
+    private AUDIO_PRIORITY_DELAY: number = 100; // ms to wait after audio before text resumes
+    private textQueue: string[] = [];
+    private textSendingActive: boolean = false;
+
 
     constructor(params: OpenAIVoiceReactAgentOptions) {
         this.audioManager = new AudioManager();
@@ -136,9 +144,11 @@ export class OpenAIVoiceReactAgent {
         };
 
         try {
+            console.log("📤 Sending audio event...");
             this.connection.sendEvent(eventAudio);
             // Wait for the audio event to be processed
             await new Promise(resolve => setTimeout(resolve, 2000));
+            console.log("📤 Sending response.create...");
             this.connection.sendEvent({
                 type: 'response.create'
             });
@@ -233,6 +243,8 @@ export class OpenAIVoiceReactAgent {
                 tools: toolDefs,
                 input_audio_format: "pcm16",
                 output_audio_format: "pcm16",
+                modalities: ["audio", "text"],
+                voice: "ash",
             },
         });
     }
@@ -249,6 +261,7 @@ export class OpenAIVoiceReactAgent {
             output_speaker: modelReceiveStream,
             tool_outputs: toolExecutor.outputIterator(),
         })) {
+            //console.log("STREAM EVENT:", streamKey, JSON.stringify(dataRaw, null, 2));
             await this.processStreamEvent(streamKey, dataRaw, toolExecutor, sendOutputChunk);
         }
     }
@@ -288,25 +301,89 @@ export class OpenAIVoiceReactAgent {
         }
     }
 
+    // private async handleSpeakerOutput(
+    //     data: any,
+    //     toolExecutor: VoiceToolExecutor,
+    //     sendOutputChunk: (chunk: string) => void | Promise<void>
+    // ): Promise<void> {
+    //     const { type } = data;
+        
+    //     if (type === "response.audio.delta" || type === "response.audio_buffer.speech_started") {
+    //         await sendOutputChunk(JSON.stringify(data));
+    //     } else if (type === "response.audio_transcript.delta") {
+    //         //console.log("sending text chunk:", data.delta);
+    //         await sendOutputChunk(JSON.stringify({ type: "text", text: data.delta }));
+    //     } else if (type === "error") {
+    //         console.error("error:", data);
+    //     } else if (type === "response.function_call_arguments.done") {
+    //         toolExecutor.addToolCall(data);
+    //     } else if (type === "response.audio_transcript.done") {
+    //         console.log("model:", data.transcript);
+    //         //await sendOutputChunk(JSON.stringify({ type: "text", text: data.transcript }))
+    //     } else if (type === "conversation.item.input_audio_transcription.completed") {
+    //         console.log("user:", data.transcript);
+    //     } else if (!EVENTS_TO_IGNORE.includes(type)) {
+    //         console.log(type);
+    //     }
+    // }
+
     private async handleSpeakerOutput(
         data: any,
         toolExecutor: VoiceToolExecutor,
         sendOutputChunk: (chunk: string) => void | Promise<void>
     ): Promise<void> {
         const { type } = data;
-
-        if (type === "response.audio.delta" || type === "response.audio_buffer.speech_started") {
+    
+        if (type === "response.audio.delta") {
+            // Send audio immediately and update last audio timestamp
+            this.lastAudioTime = Date.now();
             await sendOutputChunk(JSON.stringify(data));
+    
+        } else if (type === "response.audio_transcript.delta") {
+            const deltaText = data.delta;
+            if (deltaText) {
+                this.textQueue.push(deltaText);
+                this.processTextQueue(sendOutputChunk);
+            }
+    
+        } else if (type === "response.audio_transcript.done") {
+            // No flush needed — handled by background text queue
+    
         } else if (type === "error") {
             console.error("error:", data);
+    
         } else if (type === "response.function_call_arguments.done") {
             toolExecutor.addToolCall(data);
-        } else if (type === "response.audio_transcript.done") {
-            console.log("model:", data.transcript);
+    
         } else if (type === "conversation.item.input_audio_transcription.completed") {
             console.log("user:", data.transcript);
+    
         } else if (!EVENTS_TO_IGNORE.includes(type)) {
             console.log(type);
         }
     }
+    
+    private async processTextQueue(sendOutputChunk: (chunk: string) => void | Promise<void>) {
+        if (this.textSendingActive) return;
+        this.textSendingActive = true;
+    
+        while (this.textQueue.length > 0) {
+            const now = Date.now();
+            const timeSinceAudio = now - this.lastAudioTime;
+    
+            // Prioritize audio — give it exclusive window if just sent
+            if (timeSinceAudio < this.AUDIO_PRIORITY_DELAY) {
+                await new Promise(resolve => setTimeout(resolve, this.AUDIO_PRIORITY_DELAY - timeSinceAudio));
+            }
+    
+            const nextChunk = this.textQueue.shift();
+            if (nextChunk) {
+                await sendOutputChunk(JSON.stringify({ type: "text", text: nextChunk }));
+                await new Promise(resolve => setTimeout(resolve, this.TEXT_SEND_DELAY));
+            }
+        }
+    
+        this.textSendingActive = false;
+    }    
+
 }
