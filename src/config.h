@@ -30,7 +30,7 @@ inline const char* WEBSOCKET_HOST = "10.12.153.200";
 
 // Motor pins
 #define BRIDGE_A1_PIN 4
-#define BRIDGE_A2_PIN 4
+#define BRIDGE_A2_PIN 5
 #define BRIDGE_B1_PIN 6
 #define BRIDGE_B2_PIN 7
 #define SERVO_D_M1_PIN 9
