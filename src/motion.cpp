@@ -5,27 +5,23 @@
 
 bool is_in_motion = false;
 
-#define SERVO_PIN0 4
-#define SERVO_PIN1 16 
-
 #define CW   2000  // Clockwise (2ms pulse)
 #define STOP 1500  // Stop (1.5ms pulse, neutral position)
 #define CCW  1000  // Counterclockwise (1ms pulse)
 
-
 void init_motor_controller() {
     
     // Insert code for Initialize H bridge and PWM control signals
-    pinMode(PMOS1,OUTPUT);
-    pinMode(PMOS2,OUTPUT);
-    pinMode(NMOS1,OUTPUT);
-    pinMode(NMOS2,OUTPUT);
+    pinMode(BRIDGE_A1_PIN,OUTPUT);
+    pinMode(BRIDGE_B1_PIN,OUTPUT);
+    pinMode(BRIDGE_A2_PIN,OUTPUT);
+    pinMode(BRIDGE_B2_PIN,OUTPUT);
 
     Serial.println("Initializing Actuators... ");
-    digitalWrite(PMOS1, HIGH);
-    digitalWrite(PMOS2, HIGH);
-    digitalWrite(NMOS1, LOW);
-    digitalWrite(NMOS2, LOW);
+    digitalWrite(BRIDGE_A1_PIN, HIGH);
+    digitalWrite(BRIDGE_B1_PIN, HIGH);
+    digitalWrite(BRIDGE_A2_PIN, LOW);
+    digitalWrite(BRIDGE_B2_PIN, LOW);
     Serial.println("PMOS Set HIGH\nNmos Set LOW\nAll Actuators OFF");
 
     myServo0.attach(SERVO_PIN0);
@@ -50,45 +46,45 @@ void init_motor_controller() {
 
 void erect(int time){
   //reset the H-Bridge
-  digitalWrite(PMOS1, HIGH);
-  digitalWrite(PMOS2, HIGH);
-  digitalWrite(NMOS1, LOW);
-  digitalWrite(NMOS2, LOW);
+  digitalWrite(BRIDGE_A1_PIN, HIGH);
+  digitalWrite(BRIDGE_B1_PIN, HIGH);
+  digitalWrite(BRIDGE_A2_PIN, LOW);
+  digitalWrite(BRIDGE_B2_PIN, LOW);
 
   Serial.println("Erecting for " + char(time));
   //erect 
-  digitalWrite(PMOS1, LOW);
-  digitalWrite(NMOS2, HIGH);
+  digitalWrite(BRIDGE_A1_PIN, LOW);
+  digitalWrite(BRIDGE_B2_PIN, HIGH);
 
   delay(time);
 
   //reset the H-Bridge
-  digitalWrite(PMOS1, HIGH);
-  digitalWrite(PMOS2, HIGH);
-  digitalWrite(NMOS1, LOW);
-  digitalWrite(NMOS2, LOW);
+  digitalWrite(BRIDGE_A1_PIN, HIGH);
+  digitalWrite(BRIDGE_B1_PIN, HIGH);
+  digitalWrite(BRIDGE_A2_PIN, LOW);
+  digitalWrite(BRIDGE_B2_PIN, LOW);
   return;
 }
 
 void flacid(int time){
   //reset the H-Bridge
-  digitalWrite(PMOS1, HIGH);
-  digitalWrite(PMOS2, HIGH);
-  digitalWrite(NMOS1, LOW);
-  digitalWrite(NMOS2, LOW);
+  digitalWrite(BRIDGE_A1_PIN, HIGH);
+  digitalWrite(BRIDGE_B1_PIN, HIGH);
+  digitalWrite(BRIDGE_A2_PIN, LOW);
+  digitalWrite(BRIDGE_B2_PIN, LOW);
 
   Serial.println("Flaciding for " + char(time));
   //flacid 
-  digitalWrite(PMOS2, LOW);
-  digitalWrite(NMOS1, HIGH);
+  digitalWrite(BRIDGE_B1_PIN, LOW);
+  digitalWrite(BRIDGE_A2_PIN, HIGH);
 
   delay(time);
 
   //reset the H-Bridge
-  digitalWrite(PMOS1, HIGH);
-  digitalWrite(PMOS2, HIGH);
-  digitalWrite(NMOS1, LOW);
-  digitalWrite(NMOS2, LOW);
+  digitalWrite(BRIDGE_A1_PIN, HIGH);
+  digitalWrite(BRIDGE_B1_PIN, HIGH);
+  digitalWrite(BRIDGE_A2_PIN, LOW);
+  digitalWrite(BRIDGE_B2_PIN, LOW);
   return;
 }
 
@@ -139,8 +135,6 @@ void Stop1(int time){
     delay(time);  // Wait for time seconds
     return;
 }
-
-
 
 void step() {
     if (!is_in_motion) {

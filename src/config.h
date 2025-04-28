@@ -33,8 +33,8 @@ inline const char* WEBSOCKET_HOST = "10.12.153.200";
 #define BRIDGE_A2_PIN 5
 #define BRIDGE_B1_PIN 6
 #define BRIDGE_B2_PIN 7
-#define SERVO_D_M1_PIN 9
-#define SERVO_D_M2_PIN 10
+#define SERVO_PIN0 9
+#define SERVO_PIN1 10
 
 // I2S Microphone configuration
 // #define SAMPLE_RATE 44100
