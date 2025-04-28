@@ -9,6 +9,9 @@ bool is_in_motion = false;
 #define STOP 1500  // Stop (1.5ms pulse, neutral position)
 #define CCW  1000  // Counterclockwise (1ms pulse)
 
+Servo myServo0;
+Servo myServo1;
+
 void init_motor_controller() {
     
     // Insert code for Initialize H bridge and PWM control signals
