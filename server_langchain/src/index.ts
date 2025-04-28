@@ -31,6 +31,13 @@ app.get(
       const rawWs = ws.raw as WebSocket;
       connectedClients.add(rawWs);
 
+      rawWs.on('message', (data) => {
+        if (Buffer.isBuffer(data)) {
+          console.log('[ESP32] Microphone audio chunk received.');
+          broadcastToClients(JSON.stringify({ type: "mic.audio.chunk" }));
+        }
+      });
+
       const broadcastToClients = (data: string) => {
         connectedClients.forEach(client => {
           if (client.readyState === WebSocket.OPEN) {
@@ -53,7 +60,6 @@ app.get(
             }
             console.log("Sending to ESP32: ", data);
             client.send(data);
-            // client.send(data);
           }
         });
       };

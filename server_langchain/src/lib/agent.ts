@@ -214,6 +214,7 @@ export class OpenAIVoiceReactAgent {
             if (data instanceof Buffer || data instanceof ArrayBuffer) {
                 const buffer = data instanceof ArrayBuffer ? Buffer.from(data) : data;
                 await this.connection.handleIncomingAudio(buffer);
+                
             }
         });
     }
@@ -300,32 +301,6 @@ export class OpenAIVoiceReactAgent {
                 break;
         }
     }
-
-    // private async handleSpeakerOutput(
-    //     data: any,
-    //     toolExecutor: VoiceToolExecutor,
-    //     sendOutputChunk: (chunk: string) => void | Promise<void>
-    // ): Promise<void> {
-    //     const { type } = data;
-        
-    //     if (type === "response.audio.delta" || type === "response.audio_buffer.speech_started") {
-    //         await sendOutputChunk(JSON.stringify(data));
-    //     } else if (type === "response.audio_transcript.delta") {
-    //         //console.log("sending text chunk:", data.delta);
-    //         await sendOutputChunk(JSON.stringify({ type: "text", text: data.delta }));
-    //     } else if (type === "error") {
-    //         console.error("error:", data);
-    //     } else if (type === "response.function_call_arguments.done") {
-    //         toolExecutor.addToolCall(data);
-    //     } else if (type === "response.audio_transcript.done") {
-    //         console.log("model:", data.transcript);
-    //         //await sendOutputChunk(JSON.stringify({ type: "text", text: data.transcript }))
-    //     } else if (type === "conversation.item.input_audio_transcription.completed") {
-    //         console.log("user:", data.transcript);
-    //     } else if (!EVENTS_TO_IGNORE.includes(type)) {
-    //         console.log(type);
-    //     }
-    // }
 
     private async handleSpeakerOutput(
         data: any,

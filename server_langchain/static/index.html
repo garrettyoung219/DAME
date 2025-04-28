@@ -1,191 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Microphone to Speaker</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        #toggleAudio {
-            font-size: 18px;
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        #toggleAudio:hover {
-            background-color: #45a049;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TARS Live Console</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background-color: #000;
+      color: #00ff99;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: #111;
+      padding: 10px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-bottom: 2px solid #00ff99;
+    }
+    #log {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    .log-entry { margin-bottom: 10px; }
+    .server-event { color: #00bfff; }
+    .tars-response { color: #00ff99; }
+    .client-connect { color: #ffff00; }
+    .tool-call { color: #ff6600; }
+    footer {
+      background-color: #111;
+      padding: 10px;
+      font-size: 14px;
+      border-top: 2px solid #00ff99;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: red;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0.2; }
+    }
+  </style>
 </head>
 <body>
-    <button id="toggleAudio">Start Audio</button>
+  <header>TARS LIVE CONSOLE</header>
 
-    <script>
-        // Create audio context
-        const BUFFER_SIZE = 4800;
-        class Player {
-            constructor() {
-                this.playbackNode = null;
-            }
+  <div id="log"></div>
 
-            async init(sampleRate) {
-                const audioContext = new AudioContext({ sampleRate });
-                await audioContext.audioWorklet.addModule("/static/audio-playback-worklet.js");
+  <footer>
+    <div class="status" id="serverStatus">
+      <div class="status-dot" id="serverDot"></div> SERVER
+    </div>
+    <div class="status" id="deviceStatus">
+      <div class="status-dot" id="deviceDot"></div> DEVICE
+    </div>
+    <div class="status" id="micStatus">
+      <div class="status-dot" id="micDot"></div> MIC
+    </div>
+  </footer>
 
-                this.playbackNode = new AudioWorkletNode(audioContext, "audio-playback-worklet");
-                this.playbackNode.connect(audioContext.destination);
-            }
+  <script>
+    const logContainer = document.getElementById('log');
+    const serverDot = document.getElementById('serverDot');
+    const deviceDot = document.getElementById('deviceDot');
+    const micDot = document.getElementById('micDot');
 
-            play(buffer) {
-                if (this.playbackNode) {
-                    this.playbackNode.port.postMessage(buffer);
-                }
-            }
+    let deviceConnected = false;
 
-            stop() {
-                if (this.playbackNode) {
-                    this.playbackNode.port.postMessage(null);
-                }
-            }
-        }   
+    const ws = new WebSocket(`ws://${location.hostname}:8888/device`);
 
-        class Recorder {
-            constructor(onDataAvailable) {
-                this.onDataAvailable = onDataAvailable;
-                this.audioContext = null;
-                this.mediaStream = null;
-                this.mediaStreamSource = null;
-                this.workletNode = null;
-            }
+    function log(message, type = 'server-event') {
+      const entry = document.createElement('div');
+      entry.classList.add('log-entry', type);
+      entry.textContent = message;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
 
-            async start(stream) {
-                try {
-                    if (this.audioContext) {
-                        await this.audioContext.close();
-                    }
+    function blinkMic() {
+      micDot.style.backgroundColor = '#00ff99'; // Blink green
+      setTimeout(() => {
+        micDot.style.backgroundColor = 'red';    // Back to red after 300ms
+      }, 300);
+    }
 
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+    ws.onopen = () => {
+      serverDot.style.backgroundColor = '#00ff99';
+      log('[System] WebSocket connection opened.', 'client-connect');
+    };
 
-                    await this.audioContext.audioWorklet.addModule("/static/audio-processor-worklet.js");
+    ws.onclose = () => {
+      serverDot.style.backgroundColor = 'red';
+      deviceDot.style.backgroundColor = 'red';
+      micDot.style.backgroundColor = 'red';
+      log('[System] WebSocket connection closed.', 'server-event');
+    };
 
-                    this.mediaStream = stream;
-                    this.mediaStreamSource = this.audioContext.createMediaStreamSource(this.mediaStream);
+    ws.onerror = (error) => {
+      log('[System] WebSocket error occurred.', 'server-event');
+    };
 
-                    this.workletNode = new AudioWorkletNode(this.audioContext, "audio-processor-worklet");
-                    this.workletNode.port.onmessage = event => {
-                        this.onDataAvailable(event.data.buffer);
-                    };
+    ws.onmessage = (event) => {
+      if (typeof event.data === 'string') {
+        try {
+          const data = JSON.parse(event.data);
 
-                    this.mediaStreamSource.connect(this.workletNode);
-                    this.workletNode.connect(this.audioContext.destination);
-                } catch (error) {
-                    this.stop();
-                }
-            }
+          if (data?.type === 'response.audio_transcript.delta' && data.delta) {
+            log(`[TARS] ${data.delta}`, 'tars-response');
 
-            async stop() {
-                if (this.mediaStream) {
-                    this.mediaStream.getTracks().forEach(track => track.stop());
-                    this.mediaStream = null;
-                }
+          } else if (data?.type === 'response.function_call_arguments.done') {
+            log(`[Tool Call] ${data.name}`, 'tool-call');
 
-                if (this.audioContext) {
-                    await this.audioContext.close();
-                    this.audioContext = null;
-                }
+          } else if (data?.type === 'text') {
+            log(`[TARS-Text] ${data.text}`, 'tars-response');
 
-                this.mediaStreamSource = null;
-                this.workletNode = null;
-            }
+          } else if (data?.type === 'mic.audio.chunk') {
+            log('[ESP32] Microphone frame received', 'client-connect');
+            blinkMic();
+          }
+            else {
+            log(`[Server] ${JSON.stringify(data)}`, 'server-event');
+          }
+
+          // If receiving normal text or tool output, we assume device is alive
+          if (!deviceConnected) {
+            deviceConnected = true;
+            deviceDot.style.backgroundColor = '#00ff99';
+          }
+
+        } catch (e) {
+          log(`[Server] ${event.data}`, 'server-event');
         }
 
-        // Function to get microphone input and send it to WebSocket
-        async function startAudio() {
-            try {
-
-                // handle output -> speaker stuff
-                const ws = new WebSocket("ws://localhost:3000/ws");
-
-                const audioPlayer = new Player();
-                audioPlayer.init(24000);
-
-                ws.onmessage = event => {
-
-                    const data = JSON.parse(event.data);
-                    if (data?.type !== 'response.audio.delta') return;
-
-                    const binary = atob(data.delta);
-                    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-                    const pcmData = new Int16Array(bytes.buffer);
-
-                    audioPlayer.play(pcmData);
-                };
-
-                let buffer = new Uint8Array();
-
-                const appendToBuffer = (newData) => {
-                    const newBuffer = new Uint8Array(buffer.length + newData.length);
-                    newBuffer.set(buffer);
-                    newBuffer.set(newData, buffer.length);
-                    buffer = newBuffer;
-                };
-
-                const handleAudioData = (data) => {
-                    const uint8Array = new Uint8Array(data);
-                    appendToBuffer(uint8Array);
-
-                    if (buffer.length >= BUFFER_SIZE) {
-                        const toSend = new Uint8Array(buffer.slice(0, BUFFER_SIZE));
-                        buffer = new Uint8Array(buffer.slice(BUFFER_SIZE));
-
-                        const regularArray = String.fromCharCode(...toSend);
-                        const base64 = btoa(regularArray);
-
-                        ws.send(JSON.stringify({type: 'input_audio_buffer.append', audio: base64}));
-                    }
-                };
-
-                // handle microphone -> input websocket
-                const audioRecorder = new Recorder(handleAudioData);
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                await audioRecorder.start(stream);
-                
-
-            } catch (error) {
-                console.error('Error accessing the microphone', error);
-                alert('Error accessing the microphone. Please check your settings and try again.');
-            }
+      } else {
+        // Non-string = probably a Blob (audio buffer)
+        log(`[Server] Streaming audio playback chunk`, 'server-event');
+        
+        if (!deviceConnected) {
+          deviceConnected = true;
+          deviceDot.style.backgroundColor = '#00ff99';
         }
-
-        // Button to toggle audio
-        const toggleButton = document.getElementById('toggleAudio');
-        let isAudioOn = false;
-
-        toggleButton.addEventListener('click', async () => {
-            if (!isAudioOn) {
-                await startAudio();
-                toggleButton.textContent = 'Stop Audio';
-                isAudioOn = true;
-            } else {
-                // audioContext.suspend();
-                toggleButton.textContent = 'Start Audio';
-                isAudioOn = false;
-            }
-        });
-
-    </script>
+      }
+    };
+  </script>
 </body>
 </html>
