@@ -1,5 +1,5 @@
-#ifndef LIB_WEBSOCKET_H
-#define LIB_WEBSOCKET_H
+#ifndef WEBSOCKET_H
+#define WEBSOCKET_H
 
 #include <ArduinoWebsockets.h>
 

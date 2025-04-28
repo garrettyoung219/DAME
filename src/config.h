@@ -2,11 +2,11 @@
 #define CONFIG_H
 
 // WiFi credentials
-
 const int WEBSOCKET_PORT = 8888;
-extern const char* WIFI_SSID;
-extern const char* WIFI_PASSWORD;
-extern const char* WEBSOCKET_HOST;
+inline const char* WIFI_SSID = "ND-guest";
+inline const char* WIFI_PASSWORD = "";
+inline const char* WEBSOCKET_HOST = "10.12.153.200";
+
 // I2S Microphone pins
 #define I2S_SD 42  // Serial Data
 #define I2S_WS 41  // Word Select (LRCLK)
@@ -20,8 +20,21 @@ extern const char* WEBSOCKET_HOST;
 // LED pins
 #define LED_MIC 3   // RED LED for microphone activity
 #define LED_SPKR 41 // BLUE LED for speaker activity
+#define LED_BLINK 13
+
 // Button pin
 #define BUTTON_PIN 46
+
+// Battery percentage pin
+#define BATTERY_ADC_PIN 39
+
+// Motor pins
+#define BRIDGE_A1_PIN 4
+#define BRIDGE_A2_PIN 4
+#define BRIDGE_B1_PIN 6
+#define BRIDGE_B2_PIN 7
+#define SERVO_D_M1_PIN 9
+#define SERVO_D_M2_PIN 10
 
 // I2S Microphone configuration
 // #define SAMPLE_RATE 44100
@@ -39,12 +52,6 @@ extern const char* WEBSOCKET_HOST;
 // Audio detection thresholds
 #define MIC_THRESHOLD 2300 // Adjust based on testing
 #define LED_DELAY 1        // ms to keep LED on after sound stops
-
-// Test tone configuration
-#define TONE_FREQUENCY 440 // Hz (A4 note)
-#define TONE_DURATION 2000 // ms
-#define TONE_INTERVAL 5000 // ms
-#define SAMPLES_PER_BUFFER 1024
 
 struct LedThreshold
 {
@@ -69,6 +76,5 @@ enum AudioQuality
 const AudioQuality AUDIO_QUALITY_SPEAKER = AudioQuality::LOW_DEFINITION;
 const AudioQuality AUDIO_QUALITY = AudioQuality::HIGH_DEFINITION;
 const AudioQuality AUDIO_QUALITY_MIC = AudioQuality::LOW_DEFINITION;
-
 
 #endif

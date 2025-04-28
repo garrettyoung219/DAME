@@ -1,92 +1,39 @@
 #include <Arduino.h>
-#include <Audio.h>
 #include <WiFi.h>
 #include <ArduinoWebsockets.h>
 #include <driver/i2s.h>
-#include <math.h>
 #include "mic.h"
 #include "config.h"
 #include "lib_wifi.h"
-#include "utils.h"
 #include "speaker.h"
-#include "lib_button.h"
-#include "lib_websocket.h"
-#include <esp_task_wdt.h>  // Required for watchdog control
-#include "esp_heap_caps.h"
+#include "button.h"
+#include "websocket.h"
 #include "NextionDisplay.h"
-#include "NimBLEDevice.h"
 #include <XboxSeriesXControllerESP32_asukiaaa.hpp>
 #include "xboxControl.h"
-#include "NextionDisplay.h"
+#include "motion.h"
 
 int16_t sBuffer[bufferLen];
 ButtonChecker button;
 XboxSeriesXControllerESP32_asukiaaa::Core xboxController(XBOX_CONTROLLER_BLE_ADDRESS);
 NextionDisplay display(Serial2, 17, 16);
 
-// Function declarations
-void setupLEDs();
-void setupAudioIO();
-
-void printMemoryStats() {
-    Serial.printf("🔍 Free Heap (Internal RAM): %d bytes | Free PSRAM: %d bytes\n", 
-                  heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-                  heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-}
-
-// void printTaskStats() {
-//     TaskStatus_t *taskArray;
-//     UBaseType_t taskCount = 2;//uxTaskGetNumberOfTasks();
-    
-//     taskArray = (TaskStatus_t *)heap_caps_malloc(taskCount * sizeof(TaskStatus_t), MALLOC_CAP_INTERNAL);
-//     if (taskArray == NULL) {
-//         Serial.println("❌ Failed to allocate memory for task stats!");
-//         return;
-//     }
-
-//     uxTaskGetSystemState(taskArray, taskCount, NULL);
-    
-//     Serial.println("\n🔍 Task Stack Usage:");
-//     for (UBaseType_t i = 0; i < taskCount; i++) {
-//         Serial.printf("📌 Task: %-16s | Free Stack: %d bytes\n",
-//                       taskArray[i].pcTaskName, taskArray[i].usStackHighWaterMark);
-//     }
-    
-//     free(taskArray);
-// }
-
-void monitorMemoryTask(void *pvParameters) {
-    while (true) {
-        printMemoryStats();
-       // printTaskStats();
-        vTaskDelay(pdMS_TO_TICKS(100));  // Print every 5 seconds
-    }
-}
-
-void setupLEDs() {
-    pinMode(LED_MIC, OUTPUT);
-    pinMode(LED_SPKR, OUTPUT);
-    digitalWrite(LED_MIC, LOW);
-    digitalWrite(LED_SPKR, LOW);
-}
-
 void setupAudioIO() {
     setRecording(false);
-
-    // Uninstall any existing I2S drivers
-    i2s_driver_uninstall(I2S_PORT_MIC);
-   
     setupSpeakerI2S();
     delay(200);  // Increased delay for better initialization
-    
     setupMicrophone();
     delay(200);  // Increased delay for better initialization
 }
 
 void setup() {
+    pinMode(LED_BLINK, OUTPUT);
+    pinMode(BATTERY_ADC_PIN, INPUT);
     pinMode(BUILTIN_LED, OUTPUT);
     Serial.begin(115200);
+    init_motor_controller();
     display.begin();
+    display.printRaw("Booting...\r\n");
     xboxController.begin();
     initXboxButtonChecker();
     connectToWiFi();
@@ -94,28 +41,23 @@ void setup() {
     setupAudioIO();
 
     xTaskCreatePinnedToCore(micTask, "micTask", 16000, NULL, 1, NULL, 1);
-    display.begin();
+    display.clear();
+    display.printRaw("Ready for listening.");
 }
 
 void loop() {
     xboxController.onLoop();
     button.loop();
     xboxButtonLoop();
-    if (xboxButtonYJustPressed()) {
-        display.clear();
-        display.printRaw("Button Y just pressed.");
-        //digitalWrite(BUILTIN_LED, HIGH);
-    }
-    else if (xboxButtonYJustReleased()){
-        display.clear();
-        display.printRaw("Button Y just released.");
-    }
+   
+    // Hold Button A -> LED On
     if (xboxController.xboxNotif.btnA) {
         digitalWrite(BUILTIN_LED, HIGH);
-    }
-    else {
+    } else {
         digitalWrite(BUILTIN_LED, LOW);
     }
+
+    // Hold Button Y -> Record audio
     if (button.justPressed() || xboxButtonYJustPressed()) {
         Serial.println("Recording...");
         sendMessage("START_RECORD");
@@ -131,8 +73,7 @@ void loop() {
         
         setRecording(true);
         Serial.println("Recording ready.");
-    }
-    else if (button.justReleased() || xboxButtonYJustReleased()) {
+    } else if (button.justReleased() || xboxButtonYJustReleased()) {
         Serial.println("Stopped recording.");
         sendButtonState(0);
         sendMessage("STOP_RECORD");
@@ -144,11 +85,19 @@ void loop() {
         delay(100);
 
         display.clear(); // clear display
-
-        display.clear(); // clear display
         
         i2s_start(I2S_PORT_SPEAKER);
         delay(100);
+    }
+
+    // Up arrow -> Take a step forward
+    if (xboxController.xboxNotif.btnDirUp) {
+        step();
+    }
+
+    // Press Start Button -> Reset ESP32
+    if (xboxController.xboxNotif.btnStart) {
+        ESP.restart();
     }
 
     loopWebsocket();

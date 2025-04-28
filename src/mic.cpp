@@ -1,13 +1,11 @@
 #include <Arduino.h>
 #include <driver/i2s.h>
 #include "speaker.h"
-#include "lib_websocket.h"
-#include "utils.h"
+#include "websocket.h"
 #include "config.h"
 #include <esp_task_wdt.h>
 
 // Global flags for system state
-bool isSpeakerBusy = false;
 bool isWebSocketConnected = true;
 int16_t soundBuffer[bufferLen];
 
@@ -105,35 +103,6 @@ esp_err_t setupMicrophone()
 
   Serial.println("I2S microphone initialized successfully");
   return ESP_OK;
-}
-
-esp_err_t handleMicrophone()
-{
-  size_t bytes_read = 0;
-  const size_t bufferSize = bufferLen;
-  int16_t *buffer = (int16_t *)audio_malloc(bufferSize * sizeof(int16_t));
-
-  if (!buffer)
-  {
-    Serial.println("Failed to allocate memory for audio buffer");
-    return ESP_ERR_NO_MEM;
-  }
-
-  esp_err_t result = i2s_read(I2S_PORT_MIC, buffer, bufferSize * sizeof(int16_t), &bytes_read, portMAX_DELAY);
-  Serial.printf("Bytes read: %d\n", bytes_read);
-  for (int i = 0; i < std::min(10, (int)(bytes_read / sizeof(int16_t))); i++) {
-    Serial.printf("%04X ", buffer[i]);  // Print in HEX
-}
-
-Serial.println();
-
-  if (result == ESP_OK && bytes_read > 0)
-  {
-    detectSound(buffer, bytes_read / sizeof(int16_t));
-  }
-
-  free(buffer);
-  return result;
 }
 
 void micTask(void *parameter) {

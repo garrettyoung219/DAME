@@ -54,57 +54,6 @@ void onMessageCallback(WebsocketsMessage message) {
     }
 }
 
-// void onMessageCallback(WebsocketsMessage message)
-// {
-//     Serial.print("Got Message: ");
-//     // Serial.println(message.data());
-
-//     if (!message.isBinary())
-//     {
-//         Serial.println("Received non-binary message: " + message.data());
-
-//         // Try parsing as JSON for text output
-//         DynamicJsonDocument doc(512);
-//         DeserializationError error = deserializeJson(doc, message.data());
-
-//         if (error)
-//         {
-//             Serial.println("Failed to parse JSON: " + String(error.c_str()));
-//             return;
-//         }
-
-//         const char* type = doc["type"];
-//         if (type && String(type) == "text")
-//         {
-//             const char* text = doc["text"];
-//             if (text)
-//             {
-//                 Serial.println("TEXT FROM SERVER: " + String(text));
-//                 // TODO: display on OLED or handle as needed
-//             }
-//         }
-
-//         return;
-//     }
-
-
-//     uint8_t *payload = (uint8_t *)message.c_str();
-//     size_t length = message.length();
-
-//     if (length == 0)
-//     {
-//         Serial.println("Received empty audio data");
-//         return;
-//     }
-
-//     Serial.printf("Received binary audio data of length: %zu bytes\n", length);
-//     speaker_play(payload, length);
-//     // playBufferWithOffset(payload, length);
-//     // playBuffer((int16_t*)payload, length);
-//     delay(10);
-//     // InitI2SSpeakerOrMic(MODE_MIC);
-// }
-
 void onEventsCallback(WebsocketsEvent event, String data)
 {
     if (event == WebsocketsEvent::ConnectionOpened)

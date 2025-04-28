@@ -1,5 +1,5 @@
-#ifndef LIB_BUTTON_H
-#define LIB_BUTTON_H
+#ifndef BUTTON_H
+#define BUTTON_H
 
 #include <esp32-hal-gpio.h>
 #include "config.h"

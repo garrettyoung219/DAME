@@ -9,7 +9,7 @@ void NextionDisplay::begin(uint32_t baud) {
   nextion.begin(baud, SERIAL_8N1);
   currentLine = "";
   displayText = "";
-  updateNextionText(" ");
+  updateNextionText("");
 }
 
 void NextionDisplay::printDelta(const String& delta) {
@@ -42,6 +42,7 @@ void NextionDisplay::printDelta(const String& delta) {
 
   // Optional: limit text size to prevent overflow
   if (displayText.length() > MAX_TEXT_LENGTH) {
+    Serial.println("Exceeded max length!!!!!!!!!!!!!!!!!!!!");
     displayText = displayText.substring(displayText.length() - MAX_TEXT_LENGTH);
   }
 
@@ -61,5 +62,11 @@ void NextionDisplay::updateNextionText(const String& partial) {
 void NextionDisplay::clear() {
   currentLine = "";
   displayText = "";
-  updateNextionText(" "); // clear
+  updateNextionText(""); // clear
+}
+
+void NextionDisplay::setGifVisible(bool visible) {
+  nextion.print("vis p0,");
+  nextion.print(visible ? "1" : "0");
+  nextion.write(0xFF); nextion.write(0xFF); nextion.write(0xFF);
 }

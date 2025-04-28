@@ -4,8 +4,6 @@
 
 #include <WiFi.h>
 
-void setupWiFi();
-void setupWiFiStation();
 void connectToWiFi();
 
 #endif
