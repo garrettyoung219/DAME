@@ -13,13 +13,14 @@ Servo myServo0;
 Servo myServo1;
 
 void init_motor_controller() {
-    
     // Insert code for Initialize H bridge and PWM control signals
     pinMode(BRIDGE_A1_PIN,OUTPUT);
     pinMode(BRIDGE_B1_PIN,OUTPUT);
     pinMode(BRIDGE_A2_PIN,OUTPUT);
     pinMode(BRIDGE_B2_PIN,OUTPUT);
-
+    pinMode(SERVO_PIN0, OUTPUT);
+    pinMode(SERVO_PIN1, OUTPUT);
+    
     Serial.println("Initializing Actuators... ");
     digitalWrite(BRIDGE_A1_PIN, HIGH);
     digitalWrite(BRIDGE_B1_PIN, HIGH);
