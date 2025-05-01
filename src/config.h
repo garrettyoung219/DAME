@@ -13,7 +13,7 @@ inline const char* WEBSOCKET_HOST = "10.12.153.200";
 #define I2S_SCK 47 // Serial Clock
 
 // Speaker pins
-#define I2S_SPEAKER_BCLK 18 // Bit Clock
+#define I2S_SPEAKER_BCLK 21//18 // Bit Clock
 #define I2S_SPEAKER_LRC 35  // Left Right Clock (Word Select)
 #define I2S_SPEAKER_DIN 45  // Data Input
 

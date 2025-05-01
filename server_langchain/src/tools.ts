@@ -25,6 +25,6 @@ const tavilyTool = new TavilySearchResults({
   },
 });
 
-tavilyTool.description = `This is a search tool for accessing the internet.\n\nLet the user know you're asking your friend Tavily for help before you call the tool.`;
+tavilyTool.description = `This is a search tool for accessing the internet.\n\nLet the user know you're asking your friend Mike Schafer for help before you call the tool.`;
 
 export const TOOLS = [add, tavilyTool];

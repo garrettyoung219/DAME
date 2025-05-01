@@ -11,7 +11,7 @@ esp_err_t setupSpeakerI2S()
 {
   // Uninstall any existing I2S drivers
   i2s_driver_uninstall(I2S_PORT_MIC);
-
+  //i2s_driver_uninstall(I2S_PORT_SPEAKER);
   i2s_config_t i2s_config = {
       .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
       .sample_rate = AUDIO_QUALITY_SPEAKER,

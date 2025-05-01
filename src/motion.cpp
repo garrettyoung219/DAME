@@ -20,7 +20,7 @@ void init_motor_controller() {
     pinMode(BRIDGE_B2_PIN,OUTPUT);
     pinMode(SERVO_PIN0, OUTPUT);
     pinMode(SERVO_PIN1, OUTPUT);
-    
+
     Serial.println("Initializing Actuators... ");
     digitalWrite(BRIDGE_A1_PIN, HIGH);
     digitalWrite(BRIDGE_B1_PIN, HIGH);
@@ -32,19 +32,6 @@ void init_motor_controller() {
     myServo0.writeMicroseconds(STOP);  // Initially stop the servo
     myServo1.attach(SERVO_PIN1);
     myServo1.writeMicroseconds(STOP); 
-
-    delay(10000);
-    Serial.println("50 Seconds Remaining...");
-    delay(10000);
-    Serial.println("40 Seconds Remaining...");
-    delay(10000);
-    Serial.println("30 Seconds Remaining...");
-    delay(10000);
-    Serial.println("20 Seconds Remaining...");
-    delay(10000);
-    Serial.println("10 Seconds Remaining...");
-    delay(10000);
-    Serial.println("0 Seconds Remaining...");
     return;
 }
 
@@ -145,19 +132,19 @@ void step() {
         is_in_motion = true;
 
         erect(3000);
-        delay(2000);
-        Counter1(80);
+        delay(1000);
+        Counter1(70);
         Stop1(30); 
-        Clockwise0(80);
+        Clockwise0(70);
         Stop0(30);
-        delay(3000);
+        delay(1500);
         flacid(3000);
         
-        Counter0(140);
+        Counter0(120);
         Stop0(30); 
-        Clockwise1(140);
+        Clockwise1(120);
         Stop1(30);
-        delay(1000);
+        delay(500);
         erect(1000);
     
         is_in_motion = false;
