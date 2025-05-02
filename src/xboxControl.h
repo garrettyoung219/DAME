@@ -7,10 +7,24 @@
 
 extern XboxSeriesXControllerESP32_asukiaaa::Core xboxController;
 
-void xboxButtonLoop();
-bool xboxButtonYJustPressed();
-bool xboxButtonYJustReleased();
-void initXboxButtonChecker();
+void initXboxButtonStates();
+void updateXboxButtonStates();
+
+bool justPressedA();
+bool justPressedB();
+bool justPressedX();
+bool justPressedY();
+bool justPressedUp();
+bool justPressedDown();
+bool justPressedLeft();
+bool justPressedRight();
+bool justPressedRB();
+bool justPressedStart();
+
+bool xboxTrigJustPressed();
+bool xboxTrigJustReleased();
+
+
 
 extern bool lastTickState;
 extern bool thisTickState;

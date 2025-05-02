@@ -70,3 +70,41 @@ void NextionDisplay::setGifVisible(bool visible) {
   nextion.print(visible ? "1" : "0");
   nextion.write(0xFF); nextion.write(0xFF); nextion.write(0xFF);
 }
+
+void NextionDisplay::updateTimeTask(void *param) {
+  NextionDisplay* self = static_cast<NextionDisplay*>(param);
+  while (true) {
+      struct tm timeinfo;
+      if (getLocalTime(&timeinfo)) {
+          char timeStr[9]; // HH:MM:SS
+          strftime(timeStr, sizeof(timeStr), "%H:%M", &timeinfo);
+
+          String cmd = "tTime.txt=\"" + String(timeStr) + "\"";
+          self->nextion.print(cmd);
+          self->nextion.write(0xFF); self->nextion.write(0xFF); self->nextion.write(0xFF);
+      }
+
+      vTaskDelay(1000 / portTICK_PERIOD_MS); // Wait 1 second
+  }
+}
+
+void NextionDisplay::updateBatteryTask(void *param) {
+  NextionDisplay* self = static_cast<NextionDisplay*>(param);
+
+  int batteryPercentage = 100;  // or pass this as part of a struct if dynamic
+
+  while (true) {
+      if (batteryPercentage > 0) {
+          batteryPercentage--;
+
+          String cmd = "tBattery.txt=\"" + String(batteryPercentage) + "%\"";
+          self->nextion.print(cmd);
+          self->nextion.write(0xFF); self->nextion.write(0xFF); self->nextion.write(0xFF);
+
+          Serial.printf("Battery: %d%%\n", batteryPercentage);
+      }
+
+      vTaskDelay(600000 / portTICK_PERIOD_MS); // 10 minutes
+  }
+}
+

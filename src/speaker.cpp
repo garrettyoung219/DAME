@@ -61,7 +61,7 @@ esp_err_t setupSpeakerI2S()
 
 void speaker_play(uint8_t *payload, uint32_t len)
 {
-  const float volume = 0.7f;
+  const float volume = 0.9f;
   const float pitch = 0.8f; // 1.0 = normal speed, >1 = faster, <1 = slower
   //Serial.printf("received %lu bytes", len);
   Serial.println();

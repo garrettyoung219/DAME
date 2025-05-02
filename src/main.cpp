@@ -12,6 +12,7 @@
 #include <XboxSeriesXControllerESP32_asukiaaa.hpp>
 #include "xboxControl.h"
 #include "motion.h"
+#include <time.h>
 
 int16_t sBuffer[bufferLen];
 ButtonChecker button;
@@ -35,11 +36,14 @@ void setup() {
     display.begin();
     display.printRaw("Booting...\r\n");
     xboxController.begin();
-    initXboxButtonChecker();
+    //initXboxButtonChecker();
+    initXboxButtonStates();
     connectToWiFi();
     connectToWebSocket();
     setupAudioIO();
-
+    configTime(-5 * 3600, 3600, "pool.ntp.org"); // Change to your timezone (e.g., EST)
+    xTaskCreatePinnedToCore(NextionDisplay::updateTimeTask, "updateTimeTask", 4096, &display, 0, NULL, 1);
+    xTaskCreatePinnedToCore(NextionDisplay::updateBatteryTask, "updateBatteryTask", 4096, &display, 0, NULL, 1);
     xTaskCreatePinnedToCore(micTask, "micTask", 16000, NULL, 1, NULL, 1);
     display.clear();
     display.printRaw("Ready for listening.");
@@ -48,17 +52,18 @@ void setup() {
 void loop() {
     xboxController.onLoop();
     button.loop();
-    xboxButtonLoop();
+    //xboxButtonLoop();          // Update RT trigger state
+
    
     // Hold Button A -> LED On
-    if (xboxController.xboxNotif.btnA) {
-        digitalWrite(BUILTIN_LED, HIGH);
-    } else {
-        digitalWrite(BUILTIN_LED, LOW);
-    }
+    // if (xboxController.xboxNotif.btnA) {
+    //     digitalWrite(BUILTIN_LED, HIGH);
+    // } else {
+    //     digitalWrite(BUILTIN_LED, LOW);
+    // }
 
     // Hold Button Y -> Record audio
-    if (button.justPressed() || xboxButtonYJustPressed()) {
+    if (button.justPressed() || xboxTrigJustPressed()) {
         Serial.println("Recording...");
         sendMessage("START_RECORD");
         sendButtonState(1);
@@ -73,7 +78,7 @@ void loop() {
         
         setRecording(true);
         Serial.println("Recording ready.");
-    } else if (button.justReleased() || xboxButtonYJustReleased()) {
+    } else if (button.justReleased() || xboxTrigJustReleased()) {
         Serial.println("Stopped recording.");
         sendButtonState(0);
         sendMessage("STOP_RECORD");
@@ -90,15 +95,46 @@ void loop() {
         delay(100);
     }
 
-    // Up arrow -> Take a step forward
-    if (xboxController.xboxNotif.btnDirUp) {
+    // Xbox Controller Mapping (justPressed version)
+    if (justPressedUp()) {
+        Serial.println("UP");
+        erect(3000);
+    } else if (justPressedDown()) {
+        Serial.println("DOWN");
+        flacid(3000);
+    } else if (justPressedLeft()) {
+        Serial.println("LEFT");
+        erect(100);
+    } else if (justPressedRight()) {
+        Serial.println("RIGHT");
+        flacid(100);
+    } else if (justPressedX()) {
+        Serial.println("X");
+        Counter0(40);
+        Stop0(30);
+    } else if (justPressedY()) {
+        Serial.println("Y");
+        Clockwise0(40);
+        Stop0(30);
+    } else if (justPressedB()) {
+        Serial.println("B");
+        Clockwise1(40);
+        Stop1(30);
+    } else if (justPressedA()) {
+        Serial.println("A");
+        Counter1(40);
+        Stop1(30);
+    } else if (justPressedRB()) {
+        Serial.println("RB");
         step();
-    }
-
-    // Press Start Button -> Reset ESP32
-    if (xboxController.xboxNotif.btnStart) {
+    } else if (justPressedStart()) {
+        Serial.println("START");
         ESP.restart();
     }
 
+    
+
    loopWebsocket();
+   // Check justPressed logic here...
+   updateXboxButtonStates();  // Then update button states for next loop
 }

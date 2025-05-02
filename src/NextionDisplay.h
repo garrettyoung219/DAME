@@ -13,6 +13,9 @@ public:
   void printRaw(const String& text);
   void clear();
   void setGifVisible(bool visible);
+  static void updateTimeTask(void *param);
+  static void updateBatteryTask(void* param);
+
 
 private:
   void updateNextionText(const String& partial);

@@ -76,6 +76,9 @@ void onEventsCallback(WebsocketsEvent event, String data)
 
 void connectToWebSocket()
 {
+    client.close();
+    client = WebsocketsClient(); 
+
     // Configure WebSocket callbacks
     client.onMessage(onMessageCallback);
     client.onEvent(onEventsCallback);
@@ -162,7 +165,8 @@ void reconnectWSServer()
 
 void loopWebsocket()
 {
-    client.poll();
+    checkWebSocketConnection();
+    //client.poll();
     //   static unsigned long lastReconnectAttempt = 0;
     //   unsigned long currentMillis = millis();
 

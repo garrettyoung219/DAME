@@ -29,10 +29,10 @@ inline const char* WEBSOCKET_HOST = "10.12.153.200";
 #define BATTERY_ADC_PIN 39
 
 // Motor pins
-#define BRIDGE_A1_PIN 4
-#define BRIDGE_A2_PIN 5
-#define BRIDGE_B1_PIN 6
-#define BRIDGE_B2_PIN 7
+#define BRIDGE_A1_PIN 36
+#define BRIDGE_A2_PIN 4
+#define BRIDGE_B1_PIN 37
+#define BRIDGE_B2_PIN 5
 #define SERVO_PIN0 9
 #define SERVO_PIN1 10
 
