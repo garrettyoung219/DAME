@@ -132,17 +132,17 @@ void step() {
         is_in_motion = true;
 
         erect(3000);
-        delay(1000);
-        Counter1(70);
+        delay(250);
+        Counter1(50);
         Stop1(30); 
-        Clockwise0(70);
+        Clockwise0(50);
         Stop0(30);
-        delay(1500);
+        delay(500);
         flacid(3000);
         
-        Counter0(120);
+        Counter0(100);
         Stop0(30); 
-        Clockwise1(120);
+        Clockwise1(100);
         Stop1(30);
         delay(500);
         erect(1000);

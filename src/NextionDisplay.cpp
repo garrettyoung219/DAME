@@ -84,7 +84,7 @@ void NextionDisplay::updateTimeTask(void *param) {
           self->nextion.write(0xFF); self->nextion.write(0xFF); self->nextion.write(0xFF);
       }
 
-      vTaskDelay(1000 / portTICK_PERIOD_MS); // Wait 1 second
+      vTaskDelay(60000 / portTICK_PERIOD_MS); // Wait 60 seconds
   }
 }
 
